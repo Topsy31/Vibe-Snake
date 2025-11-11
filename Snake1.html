@@ -1,0 +1,187 @@
+import React, { useEffect, useRef, useState } from 'react';
+
+export default function SnakeGame() {
+  const canvasRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameRunning, setGameRunning] = useState(false);
+
+  const gameState = useRef({
+    snake: [{ x: 8, y: 8 }],
+    food: { x: 12, y: 12 },
+    direction: { x: 1, y: 0 },
+    nextDirection: { x: 1, y: 0 },
+    score: 0,
+  });
+
+  const GRID_SIZE = 16;
+  const CELL_SIZE = 20;
+  const GAME_SPEED = 100;
+
+  const generateFood = (snake) => {
+    let newFood;
+    let validPosition = false;
+    while (!validPosition) {
+      newFood = {
+        x: Math.floor(Math.random() * GRID_SIZE),
+        y: Math.floor(Math.random() * GRID_SIZE),
+      };
+      validPosition = !snake.some(seg => seg.x === newFood.x && seg.y === newFood.y);
+    }
+    return newFood;
+  };
+
+  const render = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const state = gameState.current;
+
+    ctx.fillStyle = '#b3d9b3';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#a0c8a0';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= GRID_SIZE; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * CELL_SIZE, 0);
+      ctx.lineTo(i * CELL_SIZE, canvas.height);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, i * CELL_SIZE);
+      ctx.lineTo(canvas.width, i * CELL_SIZE);
+      ctx.stroke();
+    }
+
+    state.snake.forEach((segment, index) => {
+      ctx.fillStyle = index === 0 ? '#000' : '#222';
+      ctx.fillRect(segment.x * CELL_SIZE + 1, segment.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+    });
+
+    ctx.fillStyle = '#d32f2f';
+    ctx.fillRect(state.food.x * CELL_SIZE + 2, state.food.y * CELL_SIZE + 2, CELL_SIZE - 4, CELL_SIZE - 4);
+  };
+
+  const update = () => {
+    const state = gameState.current;
+    state.direction = state.nextDirection;
+
+    const head = state.snake[0];
+    const newHead = {
+      x: (head.x + state.direction.x + GRID_SIZE) % GRID_SIZE,
+      y: (head.y + state.direction.y + GRID_SIZE) % GRID_SIZE,
+    };
+
+    if (state.snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+      setGameRunning(false);
+      setGameOver(true);
+      return;
+    }
+
+    state.snake.unshift(newHead);
+
+    if (newHead.x === state.food.x && newHead.y === state.food.y) {
+      state.score += 10;
+      setScore(state.score);
+      state.food = generateFood(state.snake);
+    } else {
+      state.snake.pop();
+    }
+  };
+
+  const startGame = () => {
+    setGameRunning(true);
+    setGameOver(false);
+  };
+
+  const resetGame = () => {
+    gameState.current = {
+      snake: [{ x: 8, y: 8 }],
+      food: { x: 12, y: 12 },
+      direction: { x: 1, y: 0 },
+      nextDirection: { x: 1, y: 0 },
+      score: 0,
+    };
+    setScore(0);
+    setGameOver(false);
+    setGameRunning(false);
+    render();
+  };
+
+  const handleKeyDown = (e) => {
+    const state = gameState.current;
+    if (!gameRunning) return;
+
+    const key = e.key.toLowerCase();
+    const arrowMap = {
+      'arrowup': { x: 0, y: -1 },
+      'arrowdown': { x: 0, y: 1 },
+      'arrowleft': { x: -1, y: 0 },
+      'arrowright': { x: 1, y: 0 },
+      'w': { x: 0, y: -1 },
+      's': { x: 0, y: 1 },
+      'a': { x: -1, y: 0 },
+      'd': { x: 1, y: 0 },
+    };
+
+    const newDirection = arrowMap[key];
+    if (newDirection) {
+      if (state.direction.x + newDirection.x !== 0 || state.direction.y + newDirection.y !== 0) {
+        state.nextDirection = newDirection;
+      }
+      e.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = GRID_SIZE * CELL_SIZE;
+      canvas.height = GRID_SIZE * CELL_SIZE;
+      render();
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameRunning]);
+
+  useEffect(() => {
+    const gameLoop = setInterval(() => {
+      if (gameRunning && !gameOver) {
+        update();
+        render();
+      }
+    }, GAME_SPEED);
+
+    return () => clearInterval(gameLoop);
+  }, [gameRunning, gameOver]);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
+      <h1 className="text-4xl font-bold text-green-400 mb-6">🐍 Nokia Snake</h1>
+      <canvas ref={canvasRef} className="border-4 border-gray-600 mb-6" />
+      <p className="text-2xl font-bold text-green-400 mb-6">Score: {score}</p>
+      {gameOver && <p className="text-2xl font-bold text-red-500 mb-4">Game Over!</p>}
+      <p className="text-gray-300 mb-6">Arrow keys or WASD to move</p>
+      <div className="flex gap-4">
+        <button
+          onClick={startGame}
+          disabled={gameRunning}
+          className="px-6 py-3 bg-green-500 text-white font-bold rounded hover:bg-green-600 disabled:bg-gray-500"
+        >
+          Start
+        </button>
+        <button
+          onClick={resetGame}
+          className="px-6 py-3 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
+        >
+          Reset
+        </button>
+      </div>
+    </div>
+  );
+}
