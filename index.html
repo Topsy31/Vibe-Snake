@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Snake Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Photo Snake Game</h1>
+
+        <div class="upload-section">
+            <h2>Add Your Photos</h2>
+            <input type="file" id="photoUpload" accept="image/*" multiple>
+            <button id="clearPhotos">Clear All Photos</button>
+            <div id="photoPreview"></div>
+        </div>
+
+        <div class="game-section">
+            <div class="score-board">
+                <div>Score: <span id="score">0</span></div>
+                <div>High Score: <span id="highScore">0</span></div>
+            </div>
+
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+            <div class="controls">
+                <button id="startBtn">Start Game</button>
+                <button id="pauseBtn">Pause</button>
+            </div>
+
+            <div class="instructions">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>Upload photos using the file picker above</li>
+                    <li>Use arrow keys to control the snake</li>
+                    <li>Eat the photos to grow and score points</li>
+                    <li>Don't hit the walls or yourself!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
