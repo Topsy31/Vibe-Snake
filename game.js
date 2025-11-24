@@ -302,6 +302,53 @@ document.addEventListener('keydown', (e) => {
 startBtn.addEventListener('click', startGame);
 pauseBtn.addEventListener('click', togglePause);
 
+// Touch swipe controls for mobile
+let touchStartX = 0;
+let touchStartY = 0;
+
+canvas.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+    if (!gameRunning || gamePaused) return;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    const minSwipeDistance = 30;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        // Horizontal swipe
+        if (Math.abs(diffX) > minSwipeDistance) {
+            if (diffX > 0 && velocity.x === 0) {
+                velocity = { x: 1, y: 0 }; // Right
+            } else if (diffX < 0 && velocity.x === 0) {
+                velocity = { x: -1, y: 0 }; // Left
+            }
+        }
+    } else {
+        // Vertical swipe
+        if (Math.abs(diffY) > minSwipeDistance) {
+            if (diffY > 0 && velocity.y === 0) {
+                velocity = { x: 0, y: 1 }; // Down
+            } else if (diffY < 0 && velocity.y === 0) {
+                velocity = { x: 0, y: -1 }; // Up
+            }
+        }
+    }
+    e.preventDefault();
+}, { passive: false });
+
 loadPhotosFromStorage();
 
 ctx.fillStyle = '#000';
