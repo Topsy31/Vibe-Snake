@@ -21,6 +21,8 @@ let gamePaused = false;
 let gameLoop;
 let userPhotos = [];
 let currentFoodImage = null;
+let backgroundImage = null;
+let pulseTime = 0;
 
 highScoreElement.textContent = highScore;
 
@@ -82,6 +84,24 @@ function getRandomPhoto() {
     return null;
 }
 
+function drawBackground() {
+    // Fill with dark base color first
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw muted background image if available
+    if (backgroundImage) {
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Add dark overlay to further mute the image
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
 function drawSnake() {
     ctx.fillStyle = '#4CAF50';
     snake.forEach((segment, index) => {
@@ -100,16 +120,39 @@ function drawSnake() {
 }
 
 function drawFood() {
+    const centerX = food.x * gridSize + gridSize / 2;
+    const centerY = food.y * gridSize + gridSize / 2;
+
+    // Update pulse animation
+    pulseTime += 0.15;
+    const pulseScale = 1 + Math.sin(pulseTime) * 0.3;
+    const pulseAlpha = 0.4 + Math.sin(pulseTime) * 0.3;
+
+    // Draw pulsing halo
+    ctx.save();
+    ctx.globalAlpha = pulseAlpha;
+    ctx.shadowColor = '#39FF14';
+    ctx.shadowBlur = 20 * pulseScale;
+    ctx.fillStyle = '#39FF14';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, (gridSize / 2 + 4) * pulseScale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Draw outer glow ring
+    ctx.save();
+    ctx.strokeStyle = '#39FF14';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = pulseAlpha;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, (gridSize / 2 + 6) * pulseScale, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
     if (currentFoodImage) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(
-            food.x * gridSize + gridSize / 2,
-            food.y * gridSize + gridSize / 2,
-            gridSize / 2,
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(centerX, centerY, gridSize / 2, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(
             currentFoodImage,
@@ -122,13 +165,7 @@ function drawFood() {
     } else {
         ctx.fillStyle = '#FF5722';
         ctx.beginPath();
-        ctx.arc(
-            food.x * gridSize + gridSize / 2,
-            food.y * gridSize + gridSize / 2,
-            gridSize / 2,
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(centerX, centerY, gridSize / 2, 0, Math.PI * 2);
         ctx.fill();
     }
 }
@@ -157,6 +194,10 @@ function moveSnake() {
             highScore = score;
             highScoreElement.textContent = highScore;
             localStorage.setItem('highScore', highScore);
+        }
+        // Set background to the eaten photo
+        if (currentFoodImage) {
+            backgroundImage = currentFoodImage;
         }
         placeFood();
     } else {
@@ -194,9 +235,7 @@ function gameOver() {
 
 function draw() {
     if (!gamePaused) {
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        drawBackground();
         drawFood();
         moveSnake();
         drawSnake();
@@ -211,6 +250,7 @@ function startGame() {
         scoreElement.textContent = score;
         gameRunning = true;
         gamePaused = false;
+        backgroundImage = null;
         startBtn.textContent = 'Restart Game';
         placeFood();
         clearInterval(gameLoop);
