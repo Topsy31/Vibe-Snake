@@ -395,6 +395,7 @@
         // Photo management
         let uploadedPhotos = [];
         let currentFoodImage = null;
+        let backgroundPhotos = []; // Store eaten photos as backgrounds
 
         // Colors for snake
         const snakeColors = ['#ff006e', '#00f5ff', '#00ff41', '#ffeb3b', '#b967ff'];
@@ -555,6 +556,22 @@
             }
         }
 
+        function drawBackgrounds() {
+            // Draw eaten photos as background images with transparency
+            backgroundPhotos.forEach(bgPhoto => {
+                ctx.save();
+                ctx.globalAlpha = 0.3; // Semi-transparent background
+                ctx.drawImage(
+                    bgPhoto.image,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+                ctx.restore();
+            });
+        }
+
         function drawGrid() {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
@@ -707,6 +724,14 @@
                 photosEaten++;
                 scoreElement.textContent = score;
                 photosEatenElement.textContent = photosEaten;
+
+                // Add current photo to backgrounds
+                if (currentFoodImage) {
+                    backgroundPhotos.push({
+                        image: currentFoodImage
+                    });
+                }
+
                 generateFood();
 
                 // Speed up slightly
@@ -724,6 +749,7 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackgrounds(); // Draw background photos first
             drawGrid();
             drawFood();
             drawSnake();
@@ -750,6 +776,7 @@
             photosEaten = 0;
             gameSpeed = 150;
             isPaused = false;
+            backgroundPhotos = []; // Clear background photos on restart
 
             scoreElement.textContent = score;
             photosEatenElement.textContent = photosEaten;
