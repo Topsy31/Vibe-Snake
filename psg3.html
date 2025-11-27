@@ -557,19 +557,20 @@
         }
 
         function drawBackgrounds() {
-            // Draw eaten photos as background images with transparency
-            backgroundPhotos.forEach(bgPhoto => {
+            // Draw only the most recent eaten photo as background
+            if (backgroundPhotos.length > 0) {
+                const latestPhoto = backgroundPhotos[backgroundPhotos.length - 1];
                 ctx.save();
                 ctx.globalAlpha = 0.3; // Semi-transparent background
                 ctx.drawImage(
-                    bgPhoto.image,
+                    latestPhoto.image,
                     0,
                     0,
                     canvas.width,
                     canvas.height
                 );
                 ctx.restore();
-            });
+            }
         }
 
         function drawGrid() {
